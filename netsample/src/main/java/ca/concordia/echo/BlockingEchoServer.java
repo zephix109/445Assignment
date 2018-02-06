@@ -21,9 +21,10 @@ public class BlockingEchoServer {
     private void readEchoAndRepeat(SocketChannel socket) {
         try (SocketChannel client = socket) {
             ByteBuffer buf = ByteBuffer.allocate(1024);
+            
             for (; ; ) {
                 int nr = client.read(buf);
-
+                
                 if (nr == -1)
                     break;
 
