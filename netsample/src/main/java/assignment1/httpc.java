@@ -20,13 +20,13 @@ import java.nio.charset.StandardCharsets;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
-public class HTTPClient {
+public class httpc {
 
 	private Socket TCPSocket;
 	private DataOutputStream os;
 	private DataInputStream is;
 
-	public HTTPClient(String ip, int port) {
+	public httpc(String ip, int port) {
 		try {
 			TCPSocket = new Socket(ip, port);
 			os = new DataOutputStream(TCPSocket.getOutputStream());
@@ -40,6 +40,7 @@ public class HTTPClient {
 	}
 
 	public static void main(String[] args) {
+		
 		OptionParser parser = new OptionParser();
 
 		parser.acceptsAll(asList("host", "h"), "Server hostname").withOptionalArg().defaultsTo("httpbin.org");
@@ -51,10 +52,9 @@ public class HTTPClient {
 		String host = (String) opts.valueOf("host");
 		int port = Integer.parseInt((String) opts.valueOf("port"));
 
-		HTTPClient client = new HTTPClient(host, port);
+		httpc client = new httpc(host, port);
 
-		client.getRequest(host, "/status/418");
-		//client.getRequest(host, "/get?course=networking&assignment=1");
+		client.getRequest(host, "/get?course=networking&assignment=1");
 		// client.postRequest("localhost", "/", "Hello, server");
 
 	}
@@ -65,15 +65,11 @@ public class HTTPClient {
 				os.writeBytes("GET " + location + " HTTP/1.1\r\n");
 				os.writeBytes("Host: " + domain + "\r\n\r\n");
 				BufferedReader br = new BufferedReader(new InputStreamReader(TCPSocket.getInputStream()));
-				String output;
 				String t;
 
 				while ((t = br.readLine()) != null) {
 					System.out.println(t);
 				}
-
-//				output = "hello";
-//				os.writeBytes(output);
 
 				br.close();
 				os.close();
