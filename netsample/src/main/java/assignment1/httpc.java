@@ -43,9 +43,12 @@ public class httpc {
 		
 		OptionParser parser = new OptionParser();
 
-		parser.acceptsAll(asList("host", "h"), "Server hostname").withOptionalArg().defaultsTo("httpbin.org");
-		parser.acceptsAll(asList("port", "p"), "Server ").withOptionalArg().defaultsTo("80");
-//		parser.acceptsAll(asList(""))
+		parser.acceptsAll(asList("host", "h"), "host").withOptionalArg().defaultsTo("httpbin.org");
+		parser.acceptsAll(asList("port", "p"), "port").withOptionalArg().defaultsTo("80");
+		parser.acceptsAll(asList("get", "GET", "Get"), "get");
+		parser.acceptsAll(asList("post", "POST", "Post"), "post");
+		parser.accepts("v", "verbose");
+		parser.accepts("h", "header").withOptionalArg(); 
 
 		OptionSet opts = parser.parse(args);
 
@@ -54,9 +57,13 @@ public class httpc {
 
 		httpc client = new httpc(host, port);
 
-		client.getRequest(host, "/get?course=networking&assignment=1");
-		// client.postRequest("localhost", "/", "Hello, server");
-
+		if(opts.has("get")) {
+			client.getRequest(host, "/get?course=networking&assignment=1");
+		} else if(opts.has("post")) {
+			client.postRequest(host, "get?course=networking&assignment=1", "Hello, server");
+		} else {
+			System.out.println("No get or post request");
+		}
 	}
 
 	public void getRequest(String domain, String location) {
