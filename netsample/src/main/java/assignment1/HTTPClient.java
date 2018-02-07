@@ -21,11 +21,11 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 public class HTTPClient {
-	
+
 	private Socket TCPSocket;
 	private DataOutputStream os;
 	private DataInputStream is;
-	
+
 	public HTTPClient(String ip, int port) {
 		try {
 			TCPSocket = new Socket(ip, port);
@@ -36,40 +36,50 @@ public class HTTPClient {
 		} catch (IOException e) {
 			System.err.println("Couldn't get I/O for the connection to: Echoserver " + ip);
 		}
-		
+
 	}
 
 	public static void main(String[] args) {
-		
-		HTTPClient client = new HTTPClient("localhost", 8007);
+		OptionParser parser = new OptionParser();
 
-//		client.getRequest("localhost", "/");		
-		client.postRequest("localhost", "/", "Hello, server");
-		
+		parser.acceptsAll(asList("host", "h"), "EchoServer hostname").withOptionalArg().defaultsTo("httpbin.org");
+		parser.acceptsAll(asList("port", "p"), "EchoServer listening port").withOptionalArg().defaultsTo("80");
+//		parser.acceptsAll(asList(""))
+
+		OptionSet opts = parser.parse(args);
+
+		String host = (String) opts.valueOf("host");
+		int port = Integer.parseInt((String) opts.valueOf("port"));
+
+		HTTPClient client = new HTTPClient(host, port);
+
+		client.getRequest(host, "/get?course=networking&assignment=1");
+		// client.postRequest("localhost", "/", "Hello, server");
+
 	}
-	
+
 	public void getRequest(String domain, String location) {
 		if (TCPSocket != null && os != null && is != null) {
 			try {
-				os.writeBytes("GET " + location + " HTTP/1.1\n");
+				os.writeBytes("GET " + location + " HTTP/1.0\n");
 				os.writeBytes("Host: " + domain + "\n");
 				os.writeBytes("\n.\n");
 				BufferedReader br = new BufferedReader(new InputStreamReader(TCPSocket.getInputStream()));
-				String output;				
+				String output;
 				String t;
-				
+
 				while ((t = br.readLine()) != null) {
 					System.out.println(t);
 				}
-				
+
 				output = "hello";
 				os.writeBytes(output);
-				
+
 				br.close();
 				os.close();
 				is.close();
 				TCPSocket.close();
-				
+
 			} catch (UnknownHostException e) {
 				System.err.println("Trying to connect to unknown host: " + e);
 			} catch (IOException e) {
@@ -77,29 +87,29 @@ public class HTTPClient {
 			}
 		}
 	}
-	
+
 	public void postRequest(String domain, String location, String data) {
 		if (TCPSocket != null && os != null && is != null) {
 			try {
 				os.writeBytes("POST " + location + " HTTP/1.1\n");
 				os.writeBytes("Host: " + domain + "\n");
-				os.writeBytes("\n" + data +"\n");
+				os.writeBytes("\n" + data + "\n");
 				BufferedReader br = new BufferedReader(new InputStreamReader(TCPSocket.getInputStream()));
-				String output;				
+				String output;
 				String t;
-				
+
 				while ((t = br.readLine()) != null) {
 					System.out.println(t);
 				}
-				
+
 				output = "hello";
 				os.writeBytes(output);
-				
+
 				br.close();
 				os.close();
 				is.close();
 				TCPSocket.close();
-				
+
 			} catch (UnknownHostException e) {
 				System.err.println("Trying to connect to unknown host: " + e);
 			} catch (IOException e) {
