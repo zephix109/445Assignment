@@ -42,8 +42,8 @@ public class HTTPClient {
 	public static void main(String[] args) {
 		OptionParser parser = new OptionParser();
 
-		parser.acceptsAll(asList("host", "h"), "EchoServer hostname").withOptionalArg().defaultsTo("httpbin.org");
-		parser.acceptsAll(asList("port", "p"), "EchoServer listening port").withOptionalArg().defaultsTo("80");
+		parser.acceptsAll(asList("host", "h"), "Server hostname").withOptionalArg().defaultsTo("httpbin.org");
+		parser.acceptsAll(asList("port", "p"), "Server ").withOptionalArg().defaultsTo("80");
 //		parser.acceptsAll(asList(""))
 
 		OptionSet opts = parser.parse(args);
@@ -53,7 +53,8 @@ public class HTTPClient {
 
 		HTTPClient client = new HTTPClient(host, port);
 
-		client.getRequest(host, "/get?course=networking&assignment=1");
+		client.getRequest(host, "/status/418");
+		//client.getRequest(host, "/get?course=networking&assignment=1");
 		// client.postRequest("localhost", "/", "Hello, server");
 
 	}
@@ -61,9 +62,8 @@ public class HTTPClient {
 	public void getRequest(String domain, String location) {
 		if (TCPSocket != null && os != null && is != null) {
 			try {
-				os.writeBytes("GET " + location + " HTTP/1.0\n");
-				os.writeBytes("Host: " + domain + "\n");
-				os.writeBytes("\n.\n");
+				os.writeBytes("GET " + location + " HTTP/1.1\r\n");
+				os.writeBytes("Host: " + domain + "\r\n\r\n");
 				BufferedReader br = new BufferedReader(new InputStreamReader(TCPSocket.getInputStream()));
 				String output;
 				String t;
@@ -72,8 +72,8 @@ public class HTTPClient {
 					System.out.println(t);
 				}
 
-				output = "hello";
-				os.writeBytes(output);
+//				output = "hello";
+//				os.writeBytes(output);
 
 				br.close();
 				os.close();
@@ -91,7 +91,7 @@ public class HTTPClient {
 	public void postRequest(String domain, String location, String data) {
 		if (TCPSocket != null && os != null && is != null) {
 			try {
-				os.writeBytes("POST " + location + " HTTP/1.1\n");
+				os.writeBytes("POST " + location + " HTTP/1.0\n");
 				os.writeBytes("Host: " + domain + "\n");
 				os.writeBytes("\n" + data + "\n");
 				BufferedReader br = new BufferedReader(new InputStreamReader(TCPSocket.getInputStream()));
