@@ -42,25 +42,49 @@ public class httpc {
 	public static void main(String[] args) {
 		
 		OptionParser parser = new OptionParser();
+		String host = "httpbin.org";
+		Integer port = 80;
 
-		parser.acceptsAll(asList("host", "h"), "host").withOptionalArg().defaultsTo("httpbin.org");
-		parser.acceptsAll(asList("port", "p"), "port").withOptionalArg().defaultsTo("80");
-		parser.acceptsAll(asList("get", "GET", "Get"), "get");
-		parser.acceptsAll(asList("post", "POST", "Post"), "post");
+//		parser.acceptsAll(asList("host", "h"), "host").withOptionalArg().defaultsTo("httpbin.org");
+		parser.acceptsAll(asList("port", "p"), "port").withOptionalArg().defaultsTo(port.toString());
+		
+		parser.acceptsAll(asList("get", "GET", "Get"), "get:").withRequiredArg();
+		parser.acceptsAll(asList("post", "POST", "Post"), "post:").withRequiredArg();
 		parser.accepts("v", "verbose");
-		parser.accepts("h", "header").withOptionalArg(); 
+//		parser.accepts("h", "header").withOptionalArg(); 
 
 		OptionSet opts = parser.parse(args);
 
-		String host = (String) opts.valueOf("host");
-		int port = Integer.parseInt((String) opts.valueOf("port"));
-
-		httpc client = new httpc(host, port);
+		
 
 		if(opts.has("get")) {
+//			if(opts.valuesOf("get").contains("'http://")) //httpbin.org/get?course=networking&assignment=1'"))
+//				System.out.println("WOO");
+//			else
+//				System.out.println("nooooo");
+
+//			if(opts.valuesOf("get").contains("'http://")) {
+//				int index = opts.valuesOf("get").indexOf("'http://");
+//				
+//			}
+
+			//Fetch string from list that contains http://
+			String URL = (String) opts.valuesOf("get").get(opts.valuesOf("get").indexOf(new Object() {
+			    @Override
+			    public boolean equals(Object obj) {
+			        return obj.toString().contains("'http://");
+			    }
+			}));
+			System.out.println(URL);
+			
+//			String host = (String) opts.valueOf("host");
+//			int port = Integer.parseInt((String) opts.valueOf("port"));
+			
+			httpc client = new httpc(host, port);
+			
 			client.getRequest(host, "/get?course=networking&assignment=1");
 		} else if(opts.has("post")) {
-			client.postRequest(host, "get?course=networking&assignment=1", "Hello, server");
+//			client.postRequest(host, "get?course=networking&assignment=1", "Hello, server");
 		} else {
 			System.out.println("No get or post request");
 		}
