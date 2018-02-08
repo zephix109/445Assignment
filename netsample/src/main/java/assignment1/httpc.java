@@ -16,6 +16,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -40,51 +42,67 @@ public class httpc {
 	}
 
 	public static void main(String[] args) {
-		
+
 		OptionParser parser = new OptionParser();
 		String host = "httpbin.org";
 		Integer port = 80;
-
-//		parser.acceptsAll(asList("host", "h"), "host").withOptionalArg().defaultsTo("httpbin.org");
-		parser.acceptsAll(asList("port", "p"), "port").withOptionalArg().defaultsTo(port.toString());
+		Boolean verbose = false;
+		HashMap<String, String> headers = new HashMap<String, String>();
 		
-		parser.acceptsAll(asList("get", "GET", "Get"), "get:").withRequiredArg();
-		parser.acceptsAll(asList("post", "POST", "Post"), "post:").withRequiredArg();
+		args = formatHttpRequest(args);
+
+		parser.acceptsAll(asList("host", "h"), "host").withOptionalArg().defaultsTo("httpbin.org");
+		parser.acceptsAll(asList("port", "p"), "port").withOptionalArg().defaultsTo(port.toString());
+		parser.acceptsAll(asList("get", "GET", "Get"), "get");
+		parser.acceptsAll(asList("post", "POST", "Post"), "post");
 		parser.accepts("v", "verbose");
-//		parser.accepts("h", "header").withOptionalArg(); 
+		parser.accepts("h", "header").withRequiredArg();
+		parser.accepts("http", "url").withRequiredArg();
 
 		OptionSet opts = parser.parse(args);
 
-		
-
-		if(opts.has("get")) {
-//			if(opts.valuesOf("get").contains("'http://")) //httpbin.org/get?course=networking&assignment=1'"))
-//				System.out.println("WOO");
-//			else
-//				System.out.println("nooooo");
-
-//			if(opts.valuesOf("get").contains("'http://")) {
-//				int index = opts.valuesOf("get").indexOf("'http://");
-//				
-//			}
-
-			//Fetch string from list that contains http://
-			String URL = (String) opts.valuesOf("get").get(opts.valuesOf("get").indexOf(new Object() {
-			    @Override
-			    public boolean equals(Object obj) {
-			        return obj.toString().contains("'http://");
-			    }
-			}));
-			System.out.println(URL);
+		if (opts.has("get")) {
+			if(opts.has("url")) {
+				
+			}
+				
+			if (opts.has("verbose")) {
+				verbose = true;
+			}
 			
-//			String host = (String) opts.valueOf("host");
-//			int port = Integer.parseInt((String) opts.valueOf("port"));
+			if (opts.has("header")) {
+				// Add header functionality
+			}
 			
+			
+
+			// if(opts.valuesOf("get").contains("'http://"))
+			// //httpbin.org/get?course=networking&assignment=1'"))
+			// System.out.println("WOO");
+			// else
+			// System.out.println("nooooo");
+			// if(opts.valuesOf("get").contains("'http://")) {
+			// int index = opts.valuesOf("get").indexOf("'http://");
+			//
+			// }
+			// Fetch string from list that contains http://
+			// String URL = (String)
+			// opts.valuesOf("get").get(opts.valuesOf("get").indexOf(new Object() {
+			// @Override
+			// public boolean equals(Object obj) {
+			// return obj.toString().contains("'http://");
+			// }
+			// }));
+			// System.out.println(URL);
+			// String host = (String) opts.valueOf("host");
+			// int port = Integer.parseInt((String) opts.valueOf("port"));
+
 			httpc client = new httpc(host, port);
-			
+
 			client.getRequest(host, "/get?course=networking&assignment=1");
-		} else if(opts.has("post")) {
-//			client.postRequest(host, "get?course=networking&assignment=1", "Hello, server");
+		} else if (opts.has("post")) {
+			// client.postRequest(host, "get?course=networking&assignment=1", "Hello,
+			// server");
 		} else {
 			System.out.println("No get or post request");
 		}
@@ -118,9 +136,9 @@ public class httpc {
 	public void postRequest(String domain, String location, String data) {
 		if (TCPSocket != null && os != null && is != null) {
 			try {
-				os.writeBytes("POST " + location + " HTTP/1.0\n");
+				os.writeBytes("POST " + location + " HTTP/1.1\n");
 				os.writeBytes("Host: " + domain + "\n");
-				os.writeBytes("\n" + data + "\n");
+				os.writeBytes("\n" + data + "\r\n\r\n");
 				BufferedReader br = new BufferedReader(new InputStreamReader(TCPSocket.getInputStream()));
 				String output;
 				String t;
@@ -128,9 +146,6 @@ public class httpc {
 				while ((t = br.readLine()) != null) {
 					System.out.println(t);
 				}
-
-				output = "hello";
-				os.writeBytes(output);
 
 				br.close();
 				os.close();
@@ -143,5 +158,17 @@ public class httpc {
 				System.err.println("IOException:  " + e);
 			}
 		}
+	}
+
+	public static String[] formatHttpRequest(String[] args) {
+		for (String arg : args) {
+			if (arg.startsWith("'"))
+				arg = arg.replaceAll("'", "");
+			if (!arg.startsWith("-"))
+				arg = "-" + arg;
+			// System.out.println(arg);
+		}
+
+		return args;
 	}
 }
