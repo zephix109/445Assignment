@@ -98,6 +98,8 @@ public class httpc {
 	}
 
 	/**
+	 * HTTP Get request through custom TCP socket
+	 * 
 	 * Note: Each name=value header needs to be preceded by a -h
 	 * 
 	 * @param domain
@@ -126,7 +128,6 @@ public class httpc {
 					
 				BufferedReader br = new BufferedReader(new InputStreamReader(TCPSocket.getInputStream()));
 				String t;
-
 				while ((t = br.readLine()) != null) {
 					//Do not print headers if not verbose
 					if(!verbose && !t.startsWith("{")) {
@@ -176,6 +177,12 @@ public class httpc {
 		}
 	}
 
+	/**
+	 * Formats the base http request to function with OptionParser
+	 * 
+	 * @param args
+	 * @return
+	 */
 	public static String[] formatHttpRequest(String[] args) {
 		for (String arg : args) {
 			if (arg.startsWith("'"))
@@ -188,6 +195,12 @@ public class httpc {
 		return args;
 	}
 
+	/**
+	 * Ingests and parses the url for the host and returns it
+	 * 
+	 * @param url
+	 * @return
+	 */
 	public static String getHost(String url) {
 		String formattedUrl = "";
 		try {
@@ -201,6 +214,12 @@ public class httpc {
 		return formattedUrl;
 	}
 	
+	/**
+	 * Finds the argument that holds the url and returns it
+	 * 
+	 * @param args
+	 * @return
+	 */
 	public static String fetchUrl(String[] args) {
 		for(String arg : args) {
 			if(arg.contains("http://")) {
@@ -210,6 +229,13 @@ public class httpc {
 		return "";
 	}
 	
+	/**
+	 * Parses the raw url and returns just the location
+	 * 
+	 * @param host
+	 * @param url
+	 * @return
+	 */
 	public static String getUrlDetails(String host, String url) {
 		String urlDetails = "";
 		try {
