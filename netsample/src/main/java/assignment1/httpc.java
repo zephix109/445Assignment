@@ -18,8 +18,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -72,7 +74,11 @@ public class httpc {
 			}
 
 			if (opts.has("header")) {
-				// Add header functionality
+				for(Object obj : opts.valuesOf("header")) {
+					String[] temp = obj.toString().split("=");
+					headers.put(temp[0], temp[1]);
+					//System.out.println(obj);
+				}
 			}
 
 			url = fetchUrl(args);
@@ -83,7 +89,7 @@ public class httpc {
 
 			httpc client = new httpc(host, port);
 
-			client.getRequest(host, location, verbose);
+			client.getRequest(host, location, verbose, headers);
 		} else if (opts.has("post")) {
 			 //client.postRequest(host, "get?course=networking&assignment=1", "Hello, server");
 		} else {
@@ -91,11 +97,33 @@ public class httpc {
 		}
 	}
 
-	public void getRequest(String domain, String location, Boolean verbose) {
+	/**
+	 * Note: Each name=value header needs to be preceded by a -h
+	 * 
+	 * @param domain
+	 * @param location
+	 * @param verbose
+	 * @param headers
+	 */
+	public void getRequest(String domain, String location, Boolean verbose, HashMap<String,String> headers) {
 		if (TCPSocket != null && os != null && is != null) {
 			try {
 				os.writeBytes("GET " + location + " HTTP/1.1\r\n");
-				os.writeBytes("Host: " + domain + "\r\n\r\n");
+				if(headers.isEmpty()) {
+					os.writeBytes("Host: " + domain + "\r\n\r\n");
+				} else {
+					//Add headers from HashMap to GET request
+					os.writeBytes("Host: " + domain + "\r\n");
+					Iterator<Entry<String, String>> it = headers.entrySet().iterator();
+				    while (it.hasNext()) {
+				        @SuppressWarnings("rawtypes")
+						Map.Entry pair = (Map.Entry)it.next();
+				        os.writeBytes(pair.getKey() + ": " + pair.getValue() + "\r\n");
+				        it.remove();
+				    }
+				    os.writeBytes("\r\n");
+				}
+					
 				BufferedReader br = new BufferedReader(new InputStreamReader(TCPSocket.getInputStream()));
 				String t;
 
