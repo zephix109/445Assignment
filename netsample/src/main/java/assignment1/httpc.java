@@ -79,7 +79,7 @@ public class httpc {
 			host = getHost(url);
 			location = getUrlDetails(host, url);
 			
-			System.out.println("url: " + url + "\nhost: " + host + "\nurlDetails: " + location);
+			//System.out.println("url: " + url + "\nhost: " + host + "\nlocation: " + location);
 
 			httpc client = new httpc(host, port);
 
@@ -100,18 +100,24 @@ public class httpc {
 				String t;
 
 				while ((t = br.readLine()) != null) {
+					//Do not print headers if not verbose
+					if(!verbose && !t.startsWith("{")) {
+						continue;
+					}
+					verbose = true;
 					System.out.println(t);
 				}
 
 				br.close();
-				os.close();
-				is.close();
-				TCPSocket.close();
-
+				
 			} catch (UnknownHostException e) {
 				System.err.println("Trying to connect to unknown host: " + e);
 			} catch (IOException e) {
 				System.err.println("IOException:  " + e);
+			} finally {
+				if (is != null) try { is.close(); } catch (IOException e) {} 
+	            if (os != null) try {os.close(); } catch (IOException e) {}
+	            if (TCPSocket != null) try { TCPSocket.close(); } catch (IOException e) {}
 			}
 		}
 	}
@@ -148,7 +154,7 @@ public class httpc {
 				arg = arg.replaceAll("'", "");
 			if (!arg.startsWith("-"))
 				arg = "-" + arg;
-			System.out.println(arg);
+			//System.out.println(arg);
 		}
 
 		return args;
