@@ -99,7 +99,7 @@ public class httpc {
 					data = (String) obj;
 				}
 				String[] temp = data.split(":");
-				data = "{\"" + temp[0].substring(1, temp[0].length()) + ": \"" + temp[1].substring(0, temp[1].length()-1) + "\"}";
+				data = "{\"" + temp[0].substring(1, temp[0].length()) + "\": " + temp[1].substring(0, temp[1].length()-1) + "}";
 				System.out.println(temp[0]);
 			}
 			
