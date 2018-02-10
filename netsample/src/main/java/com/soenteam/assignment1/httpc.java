@@ -1,4 +1,4 @@
-package assignment1;
+package com.soenteam.assignment1;
 
 import static java.util.Arrays.asList;
 
@@ -22,7 +22,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
@@ -63,35 +62,55 @@ public class httpc {
 		parser.acceptsAll(asList("post", "POST", "Post"), "post");
 		parser.acceptsAll(asList("v", "verbose"), "verbose");
 		parser.acceptsAll(asList("h", "header"), "header").withRequiredArg();
+		parser.acceptsAll(asList("d", "data"), "data").withRequiredArg();
+		parser.acceptsAll(asList("f", "file"), "file").withRequiredArg();
 		//parser.acceptsAll(asList("http", "https"), "http").withOptionalArg();
 
 		OptionSet opts = parser.parse(args);
-
-		if (opts.has("get")) {
-			if (opts.has("verbose")) {
-				verbose = true;
-				//System.out.println("verbose: " +verbose);
-			}
-
-			if (opts.has("header")) {
-				for(Object obj : opts.valuesOf("header")) {
-					String[] temp = obj.toString().split("=");
+		
+		// Check for verbose output
+		if (opts.has("verbose")) {
+			verbose = true;
+		}
+		
+		// Assign the headers
+		if (opts.has("header")) {
+			for(Object obj : opts.valuesOf("header")) {
+				String[] temp = obj.toString().split("=");
+				if (temp.length > 1) {
 					headers.put(temp[0], temp[1]);
-					//System.out.println(obj);
 				}
 			}
-
-			url = fetchUrl(args);
-			host = getHost(url);
-			location = getUrlDetails(host, url);
-			
-			//System.out.println("url: " + url + "\nhost: " + host + "\nlocation: " + location);
-
-			httpc client = new httpc(host, port);
-
+		}
+		
+		url = fetchUrl(args);
+		host = getHost(url);
+		location = getUrlDetails(host, url);
+		
+		httpc client = new httpc(host, port);
+		
+		if (opts.has("get")) {
 			client.getRequest(host, location, verbose, headers);
-		} else if (opts.has("post")) {
-			 //client.postRequest(host, "get?course=networking&assignment=1", "Hello, server");
+			
+		} else if (opts.has("post")) {			
+			String data = "";
+			if (opts.has("data")) {
+				for(Object obj : opts.valuesOf("data")) {
+					data = (String) obj;
+				}
+				String[] temp = data.split(":");
+				data = "{\"" + temp[0].substring(1, temp[0].length()) + ": \"" + temp[1].substring(0, temp[1].length()-1) + "\"}";
+				System.out.println(temp[0]);
+			}
+			
+			String file = "";
+			if (opts.has("file")) {
+				for(Object obj : opts.valuesOf("file")) {
+					file = (String) obj;
+				}
+			}
+			
+			client.postRequest(host, location, verbose, headers, data, file);
 		} else {
 			System.out.println("No get or post request");
 		}
@@ -151,28 +170,56 @@ public class httpc {
 		}
 	}
 
-	public void postRequest(String domain, String location, String data) {
+	public void postRequest(String domain, String location, Boolean verbose, HashMap<String,String> headers, String data, String file) {
 		if (TCPSocket != null && os != null && is != null) {
 			try {
-				os.writeBytes("POST " + location + " HTTP/1.1\n");
-				os.writeBytes("Host: " + domain + "\n");
-				os.writeBytes("\n" + data + "\r\n\r\n");
+				os.writeBytes("POST " + location + " HTTP/1.1\r\n");
+				if(headers.isEmpty()) {
+					os.writeBytes("Host: " + domain + "\r\n");
+				} else {
+					//Add headers from HashMap to GET request
+					os.writeBytes("Host: " + domain + "\r\n");
+					Iterator<Entry<String, String>> it = headers.entrySet().iterator();
+				    while (it.hasNext()) {
+				        @SuppressWarnings("rawtypes")
+						Map.Entry pair = (Map.Entry)it.next();
+				        os.writeBytes(pair.getKey() + ": " + pair.getValue() + "\r\n");
+				        it.remove();
+				    }
+				}
+				
+				if (!data.isEmpty()) {
+					os.writeBytes("Content-Type: " + "application/json\r\n");
+					os.writeBytes("Content-Length: " + data.length() + "\r\n");
+					os.writeBytes("\r\n" + data);
+				}
+				else if (!file.isEmpty()) {
+					os.writeBytes("Content-Type: " + "multipart/form-data");
+				}
+				
+				os.writeBytes("\r\n");
+					
 				BufferedReader br = new BufferedReader(new InputStreamReader(TCPSocket.getInputStream()));
 				String t;
-
 				while ((t = br.readLine()) != null) {
+					//Do not print headers if not verbose
+					if(!verbose && !t.startsWith("{")) {
+						continue;
+					}
+					verbose = true;
 					System.out.println(t);
 				}
 
 				br.close();
-				os.close();
-				is.close();
-				TCPSocket.close();
-
+				
 			} catch (UnknownHostException e) {
 				System.err.println("Trying to connect to unknown host: " + e);
 			} catch (IOException e) {
 				System.err.println("IOException:  " + e);
+			} finally {
+				if (is != null) try { is.close(); } catch (IOException e) {} 
+	            if (os != null) try {os.close(); } catch (IOException e) {}
+	            if (TCPSocket != null) try { TCPSocket.close(); } catch (IOException e) {}
 			}
 		}
 	}
@@ -189,7 +236,7 @@ public class httpc {
 				arg = arg.replaceAll("'", "");
 			if (!arg.startsWith("-"))
 				arg = "-" + arg;
-			//System.out.println(arg);
+//			System.out.println(arg);
 		}
 
 		return args;
@@ -239,7 +286,7 @@ public class httpc {
 	public static String getUrlDetails(String host, String url) {
 		String urlDetails = "";
 		try {
-			urlDetails = url.substring(url.indexOf(host) + host.length(), url.length() - 1);
+			urlDetails = url.substring(url.indexOf(host) + host.length(), url.length());
 		}catch (Exception e) {
 			System.out.println("Url format exception");
 		}
