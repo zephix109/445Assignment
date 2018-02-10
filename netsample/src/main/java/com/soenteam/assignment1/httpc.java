@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
@@ -16,6 +17,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -99,18 +101,19 @@ public class httpc {
 					data = (String) obj;
 				}
 				String[] temp = data.split(":");
-				data = "{\"" + temp[0].substring(1, temp[0].length()) + "\": " + temp[1].substring(0, temp[1].length()-1) + "}";
-				System.out.println(temp[0]);
+				data = "{\"" + temp[0].substring(1, temp[0].length()) + "\" : " + temp[1].substring(0, temp[1].length()-1) + "}";
 			}
 			
 			String file = "";
+			List<String> records = new ArrayList<String>();
 			if (opts.has("file")) {
 				for(Object obj : opts.valuesOf("file")) {
 					file = (String) obj;
 				}
+				records = getFileContents(file);
 			}
 			
-			client.postRequest(host, location, verbose, headers, data, file);
+			client.postRequest(host, location, verbose, headers, data, records);
 		} else {
 			System.out.println("No get or post request");
 		}
@@ -170,7 +173,8 @@ public class httpc {
 		}
 	}
 
-	public void postRequest(String domain, String location, Boolean verbose, HashMap<String,String> headers, String data, String file) {
+	public void postRequest(String domain, String location, Boolean verbose, HashMap<String,String> headers, 
+			String data, List<String> records) {
 		if (TCPSocket != null && os != null && is != null) {
 			try {
 				os.writeBytes("POST " + location + " HTTP/1.1\r\n");
@@ -193,11 +197,15 @@ public class httpc {
 					os.writeBytes("Content-Length: " + data.length() + "\r\n");
 					os.writeBytes("\r\n" + data);
 				}
-				else if (!file.isEmpty()) {
-					os.writeBytes("Content-Type: " + "multipart/form-data");
+				else if (!records.isEmpty()) {
+					os.writeBytes("Content-Type: " + "application/json\r\n");
+					os.writeBytes("Content-Length: " + getLength(records) + "\r\n\r\n");
+					for (String line: records) {
+						os.writeBytes(line);
+					}
 				}
 				
-				os.writeBytes("\r\n");
+				os.writeBytes("\r\n\r\n");
 					
 				BufferedReader br = new BufferedReader(new InputStreamReader(TCPSocket.getInputStream()));
 				String t;
@@ -236,7 +244,6 @@ public class httpc {
 				arg = arg.replaceAll("'", "");
 			if (!arg.startsWith("-"))
 				arg = "-" + arg;
-//			System.out.println(arg);
 		}
 
 		return args;
@@ -291,5 +298,28 @@ public class httpc {
 			System.out.println("Url format exception");
 		}
 		return urlDetails;
+	}
+	
+	public static List<String> getFileContents(String filename) {
+		List<String> records = new ArrayList<String>();
+		try {
+			BufferedReader filereader = new BufferedReader(new FileReader(filename));
+			String line;
+			while ((line = filereader.readLine()) != null) {
+				records.add(line);
+			}
+			filereader.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return records;
+	}
+	
+	public static int getLength(List<String> toCalculate) {
+		int a = 0;
+		for (String i: toCalculate) {
+			a += i.length();
+		}
+		return a;
 	}
 }
